@@ -26,9 +26,9 @@ public class HttpResource {
       // We don't actually care about the response, so it is set to timeout
       // quickly.
       RequestConfig defaultRequestConfig = RequestConfig.custom()
-          .setSocketTimeout(100)
-          .setConnectTimeout(100)
-          .setConnectionRequestTimeout(100)
+          .setSocketTimeout(500)
+          .setConnectTimeout(500)
+          .setConnectionRequestTimeout(500)
           .build();
       
       httpClient = HttpClients.custom()
