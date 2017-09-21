@@ -13,10 +13,13 @@ import org.slf4j.LoggerFactory;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.apigateway.AmazonApiGateway;
 import com.amazonaws.services.apigateway.AmazonApiGatewayClient;
+import com.amazonaws.services.apigateway.model.GetResourcesRequest;
+import com.amazonaws.services.apigateway.model.GetResourcesResult;
 import com.amazonaws.services.apigateway.model.GetRestApisRequest;
 import com.amazonaws.services.apigateway.model.GetRestApisResult;
 import com.amazonaws.services.apigateway.model.GetStagesRequest;
 import com.amazonaws.services.apigateway.model.GetStagesResult;
+import com.amazonaws.services.apigateway.model.Resource;
 import com.amazonaws.services.apigateway.model.RestApi;
 import com.amazonaws.services.apigateway.model.Stage;
 
@@ -26,6 +29,8 @@ public class Apis {
   private AmazonApiGateway apiGateway;
   private Regions region;
   private HashSet<String> selectedStages = new HashSet<String>();
+  
+  private TreeSet<URI> uris = null;
   
   public Apis (Regions region) {
     this.apiGateway = AmazonApiGatewayClient.builder()
@@ -57,23 +62,26 @@ public class Apis {
   }
   
   public TreeSet<URI> getUris () {
-    TreeSet<URI> uris = new TreeSet<URI>();
+    uris = new TreeSet<URI>();
     
     GetRestApisRequest request = new GetRestApisRequest();
     GetRestApisResult apis = apiGateway.getRestApis(request);
     
     for (RestApi api : apis.getItems()) {
       log.trace("ID of API '{}' at {}: {}", api.getName(), region.getName(), api.getId());
-      
-      uris.addAll(getUrisByApi(api.getId()));
+      findUris(api.getId());
     }
     
-    return uris;
+    try {
+      return uris;
+    } finally {
+      uris = null;
+    }
   }
   
-  private TreeSet<URI> getUrisByApi (String apiId) {
-    TreeSet<URI> uris = new TreeSet<URI>();
+  private void findUris (String apiId) {
     
+    log.debug("Find API stages for API '{}'...", apiId);
     GetStagesRequest stageRequest = new GetStagesRequest();
     stageRequest.setRestApiId(apiId);
     GetStagesResult stages = apiGateway.getStages(stageRequest);
@@ -81,35 +89,43 @@ public class Apis {
     for (Stage stage : stages.getItem()) {
       log.trace("\tstage: {}", stage.getStageName());
       
-      URI uri = null;
       if (selectedStages.size() == 0) {
-        uri = getUri(apiId, stage);
+        findUris(apiId, stage);
       } else {
         if (selectedStages.contains(stage.getStageName())) {
-          uri = getUri(apiId, stage);
+          findUris(apiId, stage);
         }
       }
-      
-      if (uri != null) {
-        uris.add(uri);
-      }
     }
-    
-    return uris;
   }
   
-  private URI getUri (String apiId, Stage stage) {
+  private void findUris (String apiId, Stage stage) {
+    
+    log.debug("Find API resources for API '{}'...", apiId);
+    GetResourcesRequest resourcesRequest = new GetResourcesRequest();
+    resourcesRequest.setRestApiId(apiId);
+    GetResourcesResult resources = apiGateway.getResources(resourcesRequest);
+    
+    for (Resource apiResource : resources.getItems()) {
+      log.trace("\tResource: {}", apiResource.getPath());
+      findUri(apiId, stage, apiResource);
+    }
+  }
+  
+  private void findUri (String apiId, Stage stage, Resource apiResource) {
     try {
-      return new URIBuilder()
+      URI uri = new URIBuilder()
           .setScheme("https")
           .setHost(
               String.format("%s.execute-api.%s.amazonaws.com", apiId, region.getName()))
           .setPath(stage.getStageName())
+          .setPath(apiResource.getPath())
           .build();
+      log.trace("URI: {}", uri);
+      uris.add(uri);
     } catch (URISyntaxException e) {
       log.error("Error occurred when building URI for API '{}' at '{}'.",
           apiId, region.getName(), e);
-      return null;
     }
   }
 }
