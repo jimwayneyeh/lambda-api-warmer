@@ -3,8 +3,12 @@ package me.jimwayneyeh.aws.lambda.apiwarmer.resources;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class HttpResource {
+  private static final Logger log = 
+      LoggerFactory.getLogger(HttpResource.class);
   private static CloseableHttpClient httpClient = null;
   
   public static CloseableHttpClient getSingleton () {
@@ -16,11 +20,15 @@ public class HttpResource {
   
   public static synchronized void initiateHttpClient () {
     if (httpClient == null) {
+      log.info("Initiate a singleton of HTTP client.");
+      
       // Create the configuration for Apache HTTP client.
+      // We don't actually care about the response, so it is set to timeout
+      // quickly.
       RequestConfig defaultRequestConfig = RequestConfig.custom()
-          .setSocketTimeout(10000)
-          .setConnectTimeout(10000)
-          .setConnectionRequestTimeout(10000)
+          .setSocketTimeout(100)
+          .setConnectTimeout(100)
+          .setConnectionRequestTimeout(100)
           .build();
       
       httpClient = HttpClients.custom()
