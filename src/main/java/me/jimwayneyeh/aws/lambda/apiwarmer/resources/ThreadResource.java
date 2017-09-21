@@ -24,7 +24,7 @@ public class ThreadResource {
     }
     
     log.info("Initiate execution pool with {} threads.", numberInPool);
-    Executors.newScheduledThreadPool(numberInPool);
+    pool = Executors.newScheduledThreadPool(numberInPool);
   }
   
   public static ScheduledExecutorService getPool () {
