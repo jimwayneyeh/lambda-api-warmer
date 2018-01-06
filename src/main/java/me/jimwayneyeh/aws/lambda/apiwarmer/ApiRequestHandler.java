@@ -4,13 +4,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URI;
-import java.util.LinkedList;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
@@ -20,12 +18,12 @@ import org.apache.http.client.methods.HttpGet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.amazonaws.regions.Regions;
 import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.RequestStreamHandler;
 
 import me.jimwayneyeh.aws.lambda.apiwarmer.resources.HttpResource;
 import me.jimwayneyeh.aws.lambda.apiwarmer.resources.ThreadResource;
+import software.amazon.awssdk.core.regions.Region;
 
 public class ApiRequestHandler implements RequestStreamHandler {
   private static final Logger log = 
@@ -40,30 +38,30 @@ public class ApiRequestHandler implements RequestStreamHandler {
       throws IOException {
     log.info("API heating is launched.");
     
-    Set<Regions> regions = getRegions();
+    Set<Region> regions = getRegions();
     log.info("{} regions are going to be warmed.", regions.size());
     
-    for (Regions region : regions) {
-      log.info("Warming region '{}'...", region.getName());
+    for (Region region : regions) {
+      log.info("Warming region '{}'...", region);
       TreeSet<URI> uris = new Apis(region)
           .setSelectedStages(System.getenv("stages"))
           .getUris();
       
       log.debug("{} APIs are found in region '{}'.", 
-          uris.size(), region.getName());
+          uris.size(), region);
       warmUpApis(uris);
     }
     
     log.info("The environment is warm now.");
   }
   
-  private Set<Regions> getRegions () {
-    TreeSet<Regions> regions = new TreeSet<Regions>();
+  private Set<Region> getRegions () {
+    TreeSet<Region> regions = new TreeSet<Region>();
     String regionsStr = System.getenv("regions");
     
     if (StringUtils.isNotBlank(regionsStr)) {
       for (String regionStr : regionsStr.split(",")) {
-        regions.add(Regions.fromName(regionStr));
+        regions.add(Region.of(regionStr));
       }
     }
     

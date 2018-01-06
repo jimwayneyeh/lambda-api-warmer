@@ -7,7 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class HttpResource {
-  private static final Logger log = 
+  private static final Logger LOGGER = 
       LoggerFactory.getLogger(HttpResource.class);
   private static CloseableHttpClient httpClient = null;
   
@@ -20,15 +20,15 @@ public class HttpResource {
   
   public static synchronized void initiateHttpClient () {
     if (httpClient == null) {
-      log.info("Initiate a singleton of HTTP client.");
+      LOGGER.info("Initiate a singleton of HTTP client.");
       
       // Create the configuration for Apache HTTP client.
       // We don't actually care about the response, so it is set to timeout
       // quickly.
       RequestConfig defaultRequestConfig = RequestConfig.custom()
-          .setSocketTimeout(500)
-          .setConnectTimeout(500)
-          .setConnectionRequestTimeout(500)
+          .setSocketTimeout(5000)
+          .setConnectTimeout(5000)
+          .setConnectionRequestTimeout(5000)
           .build();
       
       httpClient = HttpClients.custom()

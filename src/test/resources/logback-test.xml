@@ -2,10 +2,13 @@
 <configuration>
 	<!-- Define the default standard out appender for outputing logs. -->
 	<appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
-		<layout class="ch.qos.logback.classic.PatternLayout">
-			<Pattern>%d{ISO8601} - %logger{36} - %msg%n</Pattern>
-		</layout>
+		<encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+			<Pattern>%date{ss.SSS} | %-5level | %logger{26} | %msg%n</Pattern>
+		</encoder>
 	</appender>
+	
+	<logger name="software.amazon.awssdk" level="INFO" additivity="false" />
+	<logger name="org.apache.http" level="INFO" additivity="false" />
 
 	<!-- Set the default logging level to "ALL" level for loggers which are not specified. -->
 	<root level="ALL">

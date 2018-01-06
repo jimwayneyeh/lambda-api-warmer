@@ -8,8 +8,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class ThreadResource {
-  private static final Logger log = 
+  private static final Logger LOGGER = 
       LoggerFactory.getLogger(ThreadResource.class);
+  
   private static ScheduledExecutorService pool = null;
   
   static {
@@ -23,7 +24,7 @@ public class ThreadResource {
       numberInPool = Integer.parseInt(poolStr);
     }
     
-    log.info("Initiate execution pool with {} threads.", numberInPool);
+    LOGGER.info("Initiate execution pool with {} threads.", numberInPool);
     pool = Executors.newScheduledThreadPool(numberInPool);
   }
   
